@@ -1,0 +1,3 @@
+[submodule "patches/01repo-rhodecode"]
+	path = patches/01repo-rhodecode
+	url = https://github.com/jstruebel/repo-rhodecode.git

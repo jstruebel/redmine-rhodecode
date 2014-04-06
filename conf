@@ -1,0 +1,33 @@
+#!/bin/bash -ex
+install()
+{
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get -y \
+        -o DPkg::Options::=--force-confdef \
+        -o DPkg::Options::=--force-confold \
+        install $@
+}
+
+DB_PASS=turnkey
+DB_USER=rhodecode
+DB_NAME=rhodecode
+
+APACHE_RUNNING=$(/etc/init.d/apache2 status > /dev/null; echo $?)
+
+# disable the hg-web service in apache
+a2dissite mercurial
+
+# change rhodecode port to 8080 to coexist with redmine service
+CONF=/etc/apache2/sites-available/rhodecode
+sed -i "s|:80|:8080|" $CONF
+sed -i "/:443>/,/^$/ d" $CONF
+sed -i "/:443$/ d" $CONF
+
+if [ "$APACHE_RUNNING" == "0" ]; then
+    /etc/init.d/apache2 restart
+fi
+
+# update api url in reinit script
+CONF=/usr/lib/inithooks/bin/rhodecode-reinit.sh
+sed -i "s|RC_URI=.*|RC_URI=http://127.0.0.1:8080|" $CONF
+
